@@ -9,10 +9,22 @@ library(gapminder)
 library(modelr)
 library(tidyverse)
 
+my.df <- read.csv(file = "EAG_GRAD_ENTR_FIELD_15112016214524613.csv")
+stem.df <- my.df %>%  select(Country., Sex, Field,Level.of.education, YEAR, Value) %>% 
+  filter(Sex == "Women", 
+         Level.of.education == "Total tertiary education (ISCED2011 levels 5 to 8)",
+         Field == "Science, mathematics and computing")
+
 # Initial view of the data with ggplot
 gapminder %>% 
   ggplot(aes(year, lifeExp, group = country)) +
   geom_line(alpha = 1/3)
+
+#### View of data for women recieving degrees in STEM at all levels #####
+stem.df %>% 
+  ggplot(aes(YEAR, Value, colour = Country.)) +
+  geom_line(alpha = 1/3) +
+  geom_text(aes(label = Country.))
 
 # Look only at new zealand
 nz <- filter(gapminder, country == "New Zealand")
@@ -34,6 +46,27 @@ nz %>%
   geom_hline(yintercept = 0, colour = "white", size = 3) + 
   geom_line() + 
   ggtitle("Remaining pattern")
+
+## Look at Australia only
+oz <- filter(stem.df, Country. == "Australia")
+oz %>% 
+  ggplot(aes(YEAR, Value)) + 
+  geom_line() + 
+  ggtitle("Full data = (Australia)")
+
+oz_mod <- lm(Value ~ YEAR, data = oz)
+oz %>% 
+  add_predictions(oz_mod) %>%
+  ggplot(aes(YEAR, pred)) + 
+  geom_line() + 
+  ggtitle("Linear trend + (Australia)")
+
+oz %>% 
+  add_residuals(oz_mod) %>% 
+  ggplot(aes(YEAR, resid)) + 
+  geom_hline(yintercept = 0, colour = "white", size = 3) + 
+  geom_line() + 
+  ggtitle("Remaining pattern (Australia)")
 
 # Better yet, write your own function to accept a country as a parameter,
 # and produce the same graphics
